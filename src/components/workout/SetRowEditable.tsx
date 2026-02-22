@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Check, X, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -18,29 +18,47 @@ function NumericInput({
   value,
   onChange,
   placeholder,
-  step = 1,
-  min = 0,
   className,
 }: {
   value: number | null
   onChange: (v: number | null) => void
   placeholder: string
-  step?: number
-  min?: number
   className?: string
 }) {
+  // Keep a local string so the user can type freely (e.g. "185") without
+  // React snapping the value mid-keystroke or resetting the cursor.
+  // We only parse + propagate to the parent on blur.
+  const [localValue, setLocalValue] = useState(value !== null ? String(value) : '')
+
+  // When the external value changes (e.g. parent pre-fills a recommendation)
+  // and the input is not focused, sync it in.
+  const isFocused = useRef(false)
+  useEffect(() => {
+    if (!isFocused.current) {
+      setLocalValue(value !== null ? String(value) : '')
+    }
+  }, [value])
+
   return (
     <input
-      type="number"
+      type="text"
       inputMode="decimal"
-      value={value ?? ''}
-      onChange={(e) => {
-        const v = e.target.value
-        onChange(v === '' ? null : parseFloat(v))
-      }}
+      value={localValue}
       placeholder={placeholder}
-      step={step}
-      min={min}
+      onFocus={(e) => {
+        isFocused.current = true
+        e.target.select()
+      }}
+      onChange={(e) => setLocalValue(e.target.value)}
+      onBlur={() => {
+        isFocused.current = false
+        const trimmed = localValue.trim()
+        const parsed = trimmed === '' ? null : parseFloat(trimmed)
+        const finalValue = parsed !== null && !isNaN(parsed) ? parsed : null
+        onChange(finalValue)
+        // Normalise display: show the parsed number or clear
+        setLocalValue(finalValue !== null ? String(finalValue) : '')
+      }}
       className={cn(
         'h-11 w-full rounded-lg border border-input bg-background px-3 text-center text-sm font-semibold',
         'focus:outline-none focus:ring-2 focus:ring-ring',
@@ -94,7 +112,6 @@ export function SetRowEditable({
           value={loadDisplay}
           onChange={handleLoadChangeDisplay}
           placeholder={loadPlaceholder}
-          step={unit === 'lbs' ? 5 : 2.5}
           className="flex-1"
         />
       ) : (
@@ -110,7 +127,6 @@ export function SetRowEditable({
         value={set.repsCompleted ?? set.repsTarget}
         onChange={(v) => onUpdate({ repsCompleted: v })}
         placeholder={set.repsTarget ? `${set.repsTarget}` : 'reps'}
-        step={1}
         className="flex-1"
       />
 
