@@ -1,29 +1,61 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Dumbbell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { signIn } from '@/hooks/useAuth'
+import { updatePassword } from '@/hooks/useAuth'
+import { supabase } from '@/lib/supabase'
 
-export function LoginPage() {
-  const [email, setEmail] = useState('')
+export function ResetPasswordPage() {
   const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [ready, setReady] = useState(false)
   const navigate = useNavigate()
+
+  // Supabase fires PASSWORD_RECOVERY when the user lands via the reset link.
+  // We wait for this event to know we have a valid recovery session.
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setReady(true)
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters')
+      return
+    }
+    if (password !== confirm) {
+      setError('Passwords do not match')
+      return
+    }
     setLoading(true)
     setError(null)
-    const { error } = await signIn(email, password)
+    const { error } = await updatePassword(password)
     setLoading(false)
     if (error) {
       setError(error.message)
     } else {
       navigate('/')
     }
+  }
+
+  if (!ready) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center px-6 py-12 text-center">
+        <div className="rounded-2xl bg-primary p-2.5 mb-4">
+          <Dumbbell className="h-7 w-7 text-primary-foreground" />
+        </div>
+        <p className="text-muted-foreground text-sm">Verifying your reset link…</p>
+      </div>
+    )
   }
 
   return (
@@ -40,35 +72,19 @@ export function LoginPage() {
       </div>
 
       <div className="w-full max-w-sm">
-        <h2 className="text-2xl font-bold mb-1">Welcome back</h2>
-        <p className="text-muted-foreground text-sm mb-8">Sign in to your account to continue</p>
+        <h2 className="text-2xl font-bold mb-1">Set new password</h2>
+        <p className="text-muted-foreground text-sm mb-8">Choose a strong password for your account.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="text-sm font-medium block mb-1.5">Email</label>
-            <Input
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-            />
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-sm font-medium">Password</label>
-              <Link to="/forgot-password" className="text-xs text-primary">
-                Forgot password?
-              </Link>
-            </div>
+            <label className="text-sm font-medium block mb-1.5">New password</label>
             <div className="relative">
               <Input
                 type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="8+ characters"
                 required
                 className="pr-11"
               />
@@ -82,6 +98,18 @@ export function LoginPage() {
             </div>
           </div>
 
+          <div>
+            <label className="text-sm font-medium block mb-1.5">Confirm password</label>
+            <Input
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              placeholder="••••••••"
+              required
+            />
+          </div>
+
           {error && (
             <div className="rounded-lg bg-destructive/10 text-destructive text-sm px-3 py-2">
               {error}
@@ -89,16 +117,9 @@ export function LoginPage() {
           )}
 
           <Button type="submit" className="w-full" size="lg" disabled={loading}>
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? 'Updating…' : 'Update password'}
           </Button>
         </form>
-
-        <p className="text-center text-sm text-muted-foreground mt-6">
-          Don't have an account?{' '}
-          <Link to="/signup" className="text-primary font-medium">
-            Sign up
-          </Link>
-        </p>
       </div>
     </div>
   )

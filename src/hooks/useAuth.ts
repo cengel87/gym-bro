@@ -43,3 +43,13 @@ export async function signUp(email: string, password: string) {
 export async function signOut() {
   return supabase.auth.signOut()
 }
+
+export async function resetPassword(email: string) {
+  return supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`,
+  })
+}
+
+export async function updatePassword(newPassword: string) {
+  return supabase.auth.updateUser({ password: newPassword })
+}
