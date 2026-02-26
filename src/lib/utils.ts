@@ -18,7 +18,7 @@ export function kgToLbs(kg: number): number {
 }
 
 export function lbsToKg(lbs: number): number {
-  return Math.round((lbs / 2.20462) * 4) / 4
+  return lbs / 2.20462
 }
 
 export function formatDate(dateStr: string): string {

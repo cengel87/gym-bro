@@ -20,6 +20,7 @@ interface ActiveWorkoutActions {
   cancelWorkout: () => void
   addExercise: (exercise: Exercise, variantKey?: Record<string, unknown>) => void
   removeExercise: (exerciseId: string) => void
+  updateExerciseVariant: (exerciseId: string, variantKey: Record<string, unknown>) => void
   addSet: (exerciseId: string, set?: Partial<ActiveSet>) => void
   removeSet: (exerciseId: string, setNumber: number) => void
   updateSet: (exerciseId: string, setNumber: number, updates: Partial<ActiveSet>) => void
@@ -123,6 +124,15 @@ export const useActiveWorkout = create<ActiveWorkoutStore>()(
             exercises: workout.exercises.filter((e) => e.id !== exerciseLocalId),
           },
         })
+      },
+
+      updateExerciseVariant: (exerciseLocalId, variantKey) => {
+        const { workout } = get()
+        if (!workout) return
+        const exercises = workout.exercises.map((ex) =>
+          ex.id === exerciseLocalId ? { ...ex, variantKey } : ex
+        )
+        set({ workout: { ...workout, exercises } })
       },
 
       addSet: (exerciseLocalId, setOverrides = {}) => {

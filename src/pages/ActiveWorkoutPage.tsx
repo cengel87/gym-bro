@@ -7,6 +7,7 @@ import { useSettings } from '@/hooks/useProfile'
 import { useActiveWorkout } from '@/store/activeWorkout'
 import { useExerciseHistory } from '@/hooks/useSessions'
 import { useRecommendation } from '@/hooks/useRecommendation'
+import { useLatestBodyweight } from '@/hooks/useBodyweight'
 import { ExerciseBlock } from '@/components/workout/ExerciseBlock'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -27,6 +28,7 @@ export function ActiveWorkoutPage() {
     completeSet: s.completeSet,
     removeExercise: s.removeExercise,
     addExercise: s.addExercise,
+    updateExerciseVariant: s.updateExerciseVariant,
     finishWorkout: s.finishWorkout,
     cancelWorkout: s.cancelWorkout,
   }))
@@ -36,6 +38,7 @@ export function ActiveWorkoutPage() {
   const [finishing, setFinishing] = useState(false)
 
   const unit = (settings?.unit_system ?? 'kg') as 'kg' | 'lbs'
+  const latestBodyweightKg = useLatestBodyweight(user?.id)
 
   // Timer
   useEffect(() => {
@@ -170,6 +173,7 @@ export function ActiveWorkoutPage() {
             settings={settings}
             unit={unit}
             actions={actions}
+            bodyweightKg={latestBodyweightKg}
           />
         ))}
 
@@ -203,6 +207,7 @@ interface WorkoutActions {
   completeSet: (exerciseId: string, setNumber: number) => void
   removeExercise: (exerciseId: string) => void
   addExercise: (exercise: Exercise, variantKey?: Record<string, unknown>) => void
+  updateExerciseVariant: (exerciseId: string, variantKey: Record<string, unknown>) => void
   finishWorkout: () => void
   cancelWorkout: () => void
 }
@@ -214,12 +219,14 @@ function ExerciseBlockWithData({
   settings,
   unit,
   actions,
+  bodyweightKg,
 }: {
   workoutExercise: any
   userId: string | undefined
   settings: any
   unit: 'kg' | 'lbs'
   actions: WorkoutActions
+  bodyweightKg: number | null
 }) {
   const { data: history } = useExerciseHistory(userId, workoutExercise.exerciseId)
 
@@ -242,7 +249,7 @@ function ExerciseBlockWithData({
     exercise: workoutExercise.exercise,
     templateExercise,
     history,
-    currentBodyweightKg: null,
+    currentBodyweightKg: bodyweightKg,
     settings,
     preference: undefined,
   })
@@ -252,11 +259,13 @@ function ExerciseBlockWithData({
       workoutExercise={workoutExercise}
       recommendation={recommendation}
       unit={unit}
+      bodyweightKg={bodyweightKg}
       onAddSet={() => actions.addSet(workoutExercise.id)}
       onRemoveSet={(n) => actions.removeSet(workoutExercise.id, n)}
       onUpdateSet={(n, u) => actions.updateSet(workoutExercise.id, n, u)}
       onCompleteSet={(n) => actions.completeSet(workoutExercise.id, n)}
       onRemoveExercise={() => actions.removeExercise(workoutExercise.id)}
+      onVariantChange={(vk) => actions.updateExerciseVariant(workoutExercise.id, vk)}
     />
   )
 }
@@ -272,8 +281,6 @@ function AddExerciseSheet({
 }) {
   const [search, setSearch] = useState('')
   const { data: exercises } = useExercises({ search })
-
-  const [search2, setSearch2] = useState('')
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) onClose() }}>
@@ -311,7 +318,3 @@ function AddExerciseSheet({
   )
 }
 
-// Needed for the search input inside AddExerciseSheet
-function useState2<T>(initial: T): [T, (v: T) => void] {
-  return useState(initial)
-}

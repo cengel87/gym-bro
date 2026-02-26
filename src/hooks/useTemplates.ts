@@ -120,6 +120,29 @@ export function useAddTemplateExercise() {
   })
 }
 
+export function useUpdateTemplateExercise() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, templateId, updates }: {
+      id: string
+      templateId: string
+      updates: { variant_key?: Record<string, unknown> }
+    }) => {
+      const { data, error } = await supabase
+        .from('template_exercises')
+        .update(updates)
+        .eq('id', id)
+        .select('*')
+        .single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: (_data, { templateId }) => {
+      queryClient.invalidateQueries({ queryKey: ['template', templateId] })
+    },
+  })
+}
+
 export function useRemoveTemplateExercise() {
   const queryClient = useQueryClient()
   return useMutation({
