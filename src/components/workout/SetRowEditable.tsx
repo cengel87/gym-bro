@@ -79,7 +79,9 @@ export function SetRowEditable({
 }: SetRowEditableProps) {
   const [showRpe, setShowRpe] = useState(false)
 
-  const lbsToKg = (lbs: number) => Math.round((lbs / 2.20462) * 4) / 4
+  // Don't round lbsToKg — preserve the exact lbs value the user entered.
+  // Only round kgToLbs for display (nearest 0.25 lbs avoids floating-point noise).
+  const lbsToKg = (lbs: number) => lbs / 2.20462
   const kgToLbs = (kg: number) => Math.round(kg * 2.20462 * 4) / 4
 
   function handleLoadChange(kg: number | null) {
@@ -91,7 +93,10 @@ export function SetRowEditable({
   }
 
   function handleLoadChangeDisplay(display: number | null) {
-    if (display === null) return handleLoadChange(null)
+    if (display === null) {
+      // For bodyweight exercises, clearing the input resets to BW-only mode
+      return handleLoadChange(null)
+    }
     handleLoadChange(unit === 'lbs' ? lbsToKg(display) : display)
   }
 
@@ -107,17 +112,32 @@ export function SetRowEditable({
       </div>
 
       {/* Load input */}
-      {!isBodyweight || set.addedLoadKg !== null ? (
+      {!isBodyweight ? (
         <NumericInput
           value={loadDisplay}
           onChange={handleLoadChangeDisplay}
           placeholder={loadPlaceholder}
           className="flex-1"
         />
-      ) : (
-        <div className="flex-1 flex items-center justify-center h-11 rounded-lg bg-muted text-sm text-muted-foreground">
-          BW
+      ) : set.addedLoadKg !== null ? (
+        <div className="flex flex-1 items-center gap-1">
+          <span className="text-xs text-muted-foreground shrink-0">BW+</span>
+          <NumericInput
+            value={loadDisplay}
+            onChange={handleLoadChangeDisplay}
+            placeholder={`+wt (${unit})`}
+            className="flex-1"
+          />
         </div>
+      ) : (
+        <button
+          type="button"
+          className="flex-1 flex items-center justify-center h-11 rounded-lg bg-muted text-sm text-muted-foreground hover:bg-muted/80 transition-colors"
+          onClick={() => onUpdate({ addedLoadKg: 0 })}
+          title="Tap to add extra weight"
+        >
+          BW (tap to +wt)
+        </button>
       )}
 
       <span className="text-muted-foreground text-sm shrink-0">×</span>
