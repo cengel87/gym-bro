@@ -3,6 +3,8 @@ import { AuthGuard } from '@/components/auth/AuthGuard'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { SignupPage } from '@/pages/auth/SignupPage'
+import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
+import { ResetPasswordPage } from '@/pages/auth/ResetPasswordPage'
 import { TodayPage } from '@/pages/TodayPage'
 import { ActiveWorkoutPage } from '@/pages/ActiveWorkoutPage'
 import { WorkoutStartPage } from '@/pages/WorkoutStartPage'
@@ -20,6 +22,8 @@ export function AppRouter() {
         {/* Public */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
 
         {/* Protected */}
         <Route

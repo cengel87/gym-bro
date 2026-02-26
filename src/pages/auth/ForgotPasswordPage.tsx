@@ -1,29 +1,44 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Dumbbell } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Dumbbell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { signIn } from '@/hooks/useAuth'
+import { resetPassword } from '@/hooks/useAuth'
 
-export function LoginPage() {
+export function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const navigate = useNavigate()
+  const [sent, setSent] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    const { error } = await signIn(email, password)
+    const { error } = await resetPassword(email)
     setLoading(false)
     if (error) {
       setError(error.message)
     } else {
-      navigate('/')
+      setSent(true)
     }
+  }
+
+  if (sent) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center px-6 py-12 text-center">
+        <div className="rounded-2xl bg-emerald-500/10 p-4 mb-6">
+          <Dumbbell className="h-10 w-10 text-emerald-400 mx-auto" />
+        </div>
+        <h2 className="text-2xl font-bold mb-2">Check your email</h2>
+        <p className="text-muted-foreground max-w-xs">
+          We sent a password reset link to <strong>{email}</strong>. Click the link to set a new password.
+        </p>
+        <Button variant="ghost" className="mt-6" asChild>
+          <Link to="/login">Back to sign in</Link>
+        </Button>
+      </div>
+    )
   }
 
   return (
@@ -40,8 +55,10 @@ export function LoginPage() {
       </div>
 
       <div className="w-full max-w-sm">
-        <h2 className="text-2xl font-bold mb-1">Welcome back</h2>
-        <p className="text-muted-foreground text-sm mb-8">Sign in to your account to continue</p>
+        <h2 className="text-2xl font-bold mb-1">Forgot password?</h2>
+        <p className="text-muted-foreground text-sm mb-8">
+          Enter your email and we'll send you a reset link.
+        </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -55,32 +72,6 @@ export function LoginPage() {
               required
             />
           </div>
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-sm font-medium">Password</label>
-              <Link to="/forgot-password" className="text-xs text-primary">
-                Forgot password?
-              </Link>
-            </div>
-            <div className="relative">
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="pr-11"
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
-          </div>
 
           {error && (
             <div className="rounded-lg bg-destructive/10 text-destructive text-sm px-3 py-2">
@@ -89,14 +80,14 @@ export function LoginPage() {
           )}
 
           <Button type="submit" className="w-full" size="lg" disabled={loading}>
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? 'Sending…' : 'Send reset link'}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
-          Don't have an account?{' '}
-          <Link to="/signup" className="text-primary font-medium">
-            Sign up
+          Remember your password?{' '}
+          <Link to="/login" className="text-primary font-medium">
+            Sign in
           </Link>
         </p>
       </div>

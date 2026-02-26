@@ -319,6 +319,15 @@ export interface Database {
           estimated_1rm_kg: number
         }
       }
+      exercise_1rm_estimates: {
+        Row: {
+          user_id: string
+          exercise_id: string
+          variant_key: Json
+          session_date: string
+          estimated_1rm_kg: number
+        }
+      }
     }
     Functions: Record<string, never>
     Enums: Record<string, never>

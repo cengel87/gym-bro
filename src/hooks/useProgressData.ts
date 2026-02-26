@@ -7,7 +7,7 @@ export function useExercise1RM(userId: string | undefined, exerciseId: string | 
     queryFn: async () => {
       if (!userId || !exerciseId) throw new Error('Missing params')
       const { data, error } = await supabase
-        .from('mv_exercise_1rm')
+        .from('exercise_1rm_estimates')
         .select('session_date, estimated_1rm_kg')
         .eq('user_id', userId)
         .eq('exercise_id', exerciseId)
