@@ -18,11 +18,13 @@ function NumericInput({
   value,
   onChange,
   placeholder,
+  prefix,
   className,
 }: {
   value: number | null
   onChange: (v: number | null) => void
   placeholder: string
+  prefix?: string
   className?: string
 }) {
   // Keep a local string so the user can type freely (e.g. "185") without
@@ -39,7 +41,7 @@ function NumericInput({
     }
   }, [value])
 
-  return (
+  const input = (
     <input
       type="text"
       inputMode="decimal"
@@ -60,11 +62,23 @@ function NumericInput({
         setLocalValue(finalValue !== null ? String(finalValue) : '')
       }}
       className={cn(
-        'h-11 w-full rounded-lg border border-input bg-background px-3 text-center text-sm font-semibold',
+        'h-11 w-full rounded-lg border border-input bg-background text-center text-sm font-semibold',
         'focus:outline-none focus:ring-2 focus:ring-ring',
+        prefix ? 'pl-9 pr-2' : 'px-3',
         className
       )}
     />
+  )
+
+  if (!prefix) return input
+
+  return (
+    <div className={cn('relative', className)}>
+      <span className="pointer-events-none absolute inset-y-0 left-2 flex items-center text-xs font-medium text-muted-foreground">
+        {prefix}
+      </span>
+      {input}
+    </div>
   )
 }
 
@@ -120,15 +134,13 @@ export function SetRowEditable({
           className="flex-1"
         />
       ) : set.addedLoadKg !== null ? (
-        <div className="flex flex-1 items-center gap-1">
-          <span className="text-xs text-muted-foreground shrink-0">BW+</span>
-          <NumericInput
-            value={loadDisplay}
-            onChange={handleLoadChangeDisplay}
-            placeholder={`+wt (${unit})`}
-            className="flex-1"
-          />
-        </div>
+        <NumericInput
+          value={loadDisplay}
+          onChange={handleLoadChangeDisplay}
+          placeholder={`+wt`}
+          prefix="BW+"
+          className="flex-1"
+        />
       ) : (
         <button
           type="button"
