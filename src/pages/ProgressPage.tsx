@@ -4,11 +4,12 @@ import { PageContainer } from '@/components/layout/PageContainer'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
 import { useAuth } from '@/hooks/useAuth'
 import { useSettings } from '@/hooks/useProfile'
-import { useBodyweightHistory } from '@/hooks/useBodyweight'
+import { useBodyweightHistory, useLogBodyweight } from '@/hooks/useBodyweight'
 import { useWeeklyVolume, useWorkoutConsistency } from '@/hooks/useProgressData'
-import { formatDate } from '@/lib/utils'
+import { formatDate, lbsToKg } from '@/lib/utils'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
 } from 'recharts'
@@ -19,8 +20,25 @@ export function ProgressPage() {
   const { data: bodyweight, isLoading: bwLoading } = useBodyweightHistory(user?.id, 90)
   const { data: weeklyVolume, isLoading: volLoading } = useWeeklyVolume(user?.id)
   const { data: consistency } = useWorkoutConsistency(user?.id)
+  const logBwMutation = useLogBodyweight(user?.id)
 
   const unit = (settings?.unit_system ?? 'kg') as 'kg' | 'lbs'
+
+  // Bodyweight logging form state
+  const [bwInput, setBwInput] = useState('')
+  const [bwDate, setBwDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [bwSuccess, setBwSuccess] = useState(false)
+
+  async function handleLogBodyweight() {
+    const raw = parseFloat(bwInput)
+    if (isNaN(raw) || raw <= 0) return
+    const weightKg = unit === 'lbs' ? lbsToKg(raw) : raw
+    await logBwMutation.mutateAsync({ weightKg, measuredAt: bwDate })
+    setBwInput('')
+    setBwDate(new Date().toISOString().slice(0, 10))
+    setBwSuccess(true)
+    setTimeout(() => setBwSuccess(false), 2500)
+  }
 
   const bwChartData = (bodyweight ?? []).slice().reverse().map((entry) => ({
     date: formatDate(entry.measured_at),
@@ -113,15 +131,55 @@ export function ProgressPage() {
             </TabsContent>
 
             <TabsContent value="bodyweight">
+              {/* Log bodyweight form */}
               <Card className="mt-3">
                 <CardHeader>
-                  <CardTitle className="text-sm">Bodyweight ({unit})</CardTitle>
+                  <CardTitle className="text-sm">Log Bodyweight</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={bwInput}
+                      onChange={(e) => setBwInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleLogBodyweight()}
+                      placeholder={`Weight (${unit})`}
+                      className="h-10 flex-1 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                    <input
+                      type="date"
+                      value={bwDate}
+                      onChange={(e) => setBwDate(e.target.value)}
+                      className="h-10 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleLogBodyweight}
+                      disabled={!bwInput || isNaN(parseFloat(bwInput)) || logBwMutation.isPending}
+                    >
+                      {logBwMutation.isPending ? '…' : 'Log'}
+                    </Button>
+                  </div>
+                  {bwSuccess && (
+                    <p className="mt-2 text-xs text-green-500 font-medium">✓ Logged!</p>
+                  )}
+                  {logBwMutation.isError && (
+                    <p className="mt-2 text-xs text-destructive">Failed to save. Try again.</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Bodyweight chart */}
+              <Card className="mt-3">
+                <CardHeader>
+                  <CardTitle className="text-sm">History ({unit})</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {bwLoading ? (
                     <Skeleton className="h-48 w-full" />
                   ) : bwChartData.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">No bodyweight entries yet</p>
+                    <p className="text-sm text-muted-foreground text-center py-8">No entries yet — log your first weight above</p>
                   ) : (
                     <ResponsiveContainer width="100%" height={220}>
                       <LineChart data={bwChartData}>
