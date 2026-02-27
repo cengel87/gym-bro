@@ -9,6 +9,7 @@ import { useExerciseHistory } from '@/hooks/useSessions'
 import { useRecommendation } from '@/hooks/useRecommendation'
 import { useLatestBodyweight } from '@/hooks/useBodyweight'
 import { ExerciseBlock } from '@/components/workout/ExerciseBlock'
+import { RestTimerBanner } from '@/components/workout/RestTimerBanner'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { useExercises } from '@/hooks/useExercises'
@@ -36,9 +37,25 @@ export function ActiveWorkoutPage() {
   const [elapsed, setElapsed] = useState(0)
   const [addExerciseOpen, setAddExerciseOpen] = useState(false)
   const [finishing, setFinishing] = useState(false)
+  const [restTimer, setRestTimer] = useState<{ exerciseId: string; setNumber: number } | null>(null)
 
   const unit = (settings?.unit_system ?? 'kg') as 'kg' | 'lbs'
   const latestBodyweightKg = useLatestBodyweight(user?.id)
+  const restEnabled = settings?.rest_timer_enabled !== false
+  const restDuration = settings?.default_rest_seconds ?? 120
+
+  function handleSetCompleted(exerciseId: string, setNumber: number) {
+    if (restEnabled) {
+      setRestTimer({ exerciseId, setNumber })
+    }
+  }
+
+  function handleRestDone(elapsedSeconds: number) {
+    if (restTimer) {
+      actions.updateSet(restTimer.exerciseId, restTimer.setNumber, { restSecondsTaken: elapsedSeconds })
+    }
+    setRestTimer(null)
+  }
 
   // Timer
   useEffect(() => {
@@ -174,6 +191,7 @@ export function ActiveWorkoutPage() {
             unit={unit}
             actions={actions}
             bodyweightKg={latestBodyweightKg}
+            onSetCompleted={handleSetCompleted}
           />
         ))}
 
@@ -186,6 +204,15 @@ export function ActiveWorkoutPage() {
           Add exercise
         </Button>
       </div>
+
+      {/* Rest timer */}
+      {restTimer && (
+        <RestTimerBanner
+          key={`${restTimer.exerciseId}-${restTimer.setNumber}`}
+          durationSeconds={restDuration}
+          onDone={handleRestDone}
+        />
+      )}
 
       {/* Add exercise sheet */}
       <AddExerciseSheet
@@ -220,6 +247,7 @@ function ExerciseBlockWithData({
   unit,
   actions,
   bodyweightKg,
+  onSetCompleted,
 }: {
   workoutExercise: any
   userId: string | undefined
@@ -227,6 +255,7 @@ function ExerciseBlockWithData({
   unit: 'kg' | 'lbs'
   actions: WorkoutActions
   bodyweightKg: number | null
+  onSetCompleted?: (exerciseId: string, setNumber: number) => void
 }) {
   const { data: history } = useExerciseHistory(userId, workoutExercise.exerciseId)
 
@@ -263,7 +292,10 @@ function ExerciseBlockWithData({
       onAddSet={() => actions.addSet(workoutExercise.id)}
       onRemoveSet={(n) => actions.removeSet(workoutExercise.id, n)}
       onUpdateSet={(n, u) => actions.updateSet(workoutExercise.id, n, u)}
-      onCompleteSet={(n) => actions.completeSet(workoutExercise.id, n)}
+      onCompleteSet={(n) => {
+        actions.completeSet(workoutExercise.id, n)
+        onSetCompleted?.(workoutExercise.id, n)
+      }}
       onRemoveExercise={() => actions.removeExercise(workoutExercise.id)}
       onVariantChange={(vk) => actions.updateExerciseVariant(workoutExercise.id, vk)}
     />
