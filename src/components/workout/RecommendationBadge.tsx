@@ -25,9 +25,9 @@ function formatLoad(rec: RecommendationResult, unit: 'kg' | 'lbs') {
   if (set.addedLoadKg !== undefined && set.bodyweightKg !== undefined) {
     const bw = unit === 'lbs' ? Math.round(set.bodyweightKg * 2.20462) : set.bodyweightKg
     const add = unit === 'lbs' ? Math.round(set.addedLoadKg * 2.20462) : set.addedLoadKg
-    const unit_str = unit
-    if (add === 0) return `BW ${bw}${unit_str}`
-    return `BW +${add}${unit_str}`
+    const total = unit === 'lbs' ? Math.round((set.bodyweightKg + set.addedLoadKg) * 2.20462) : set.bodyweightKg + set.addedLoadKg
+    if (add === 0) return `BW (${bw}${unit})`
+    return `BW +${add}${unit} (${total}${unit})`
   }
 
   if (set.externalLoadKg !== undefined) {
