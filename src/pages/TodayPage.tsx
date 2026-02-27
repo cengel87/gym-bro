@@ -25,7 +25,7 @@ export function TodayPage() {
   return (
     <>
       <TopBar
-        title="Gym Bro"
+        title="APEX"
         rightAction={
           <Button size="sm" variant="ghost" onClick={() => navigate('/settings')}>
             {user?.email?.split('@')[0] ?? 'You'}

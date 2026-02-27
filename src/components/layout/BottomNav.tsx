@@ -26,15 +26,21 @@ export function BottomNav() {
               key={path}
               to={path}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 px-2 py-3 min-w-[60px] tap-highlight-none transition-colors',
+                'relative flex flex-col items-center justify-center gap-1 px-2 py-3 min-w-[60px] tap-highlight-none transition-colors',
                 isActive ? 'text-primary' : 'text-muted-foreground'
               )}
             >
+              {isActive && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-primary" />
+              )}
               <Icon
-                className={cn('h-5 w-5 transition-transform', isActive && 'scale-110')}
+                className={cn(
+                  'h-5 w-5 transition-transform',
+                  isActive && 'scale-110 drop-shadow-[0_0_6px_rgba(0,212,255,0.5)]'
+                )}
                 strokeWidth={isActive ? 2.5 : 1.75}
               />
-              <span className="text-[10px] font-medium">{label}</span>
+              <span className={cn('text-[10px]', isActive ? 'font-medium text-primary' : 'font-medium')}>{label}</span>
             </NavLink>
           )
         })}

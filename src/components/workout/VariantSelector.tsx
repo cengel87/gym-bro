@@ -50,7 +50,7 @@ export function VariantSelector({ exercise, variantKey, onChange, onClose }: Var
                 className={cn(
                   'px-2.5 py-1.5 rounded-md text-xs font-medium border transition-colors',
                   draft.incline_deg === deg
-                    ? 'bg-primary text-primary-foreground border-primary'
+                    ? 'bg-primary/20 text-primary border-primary/40'
                     : 'bg-background border-input hover:bg-accent'
                 )}
                 onClick={() => setField('incline_deg', draft.incline_deg === deg ? null : deg)}
@@ -73,7 +73,7 @@ export function VariantSelector({ exercise, variantKey, onChange, onClose }: Var
                 className={cn(
                   'px-2.5 py-1.5 rounded-md text-xs font-medium border capitalize transition-colors',
                   draft.grip === grip
-                    ? 'bg-primary text-primary-foreground border-primary'
+                    ? 'bg-primary/20 text-primary border-primary/40'
                     : 'bg-background border-input hover:bg-accent'
                 )}
                 onClick={() => setField('grip', draft.grip === grip ? null : grip)}
@@ -96,7 +96,7 @@ export function VariantSelector({ exercise, variantKey, onChange, onClose }: Var
                 className={cn(
                   'px-2.5 py-1.5 rounded-md text-xs font-medium border capitalize transition-colors',
                   draft.stance === stance
-                    ? 'bg-primary text-primary-foreground border-primary'
+                    ? 'bg-primary/20 text-primary border-primary/40'
                     : 'bg-background border-input hover:bg-accent'
                 )}
                 onClick={() => setField('stance', draft.stance === stance ? null : stance)}

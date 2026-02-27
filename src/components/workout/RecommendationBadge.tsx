@@ -10,8 +10,8 @@ interface RecommendationBadgeProps {
 }
 
 const stateConfig = {
-  increase: { icon: TrendingUp, label: 'Level up', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-  maintain: { icon: Minus, label: 'Keep going', color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
+  increase: { icon: TrendingUp, label: 'Level up', color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' },
+  maintain: { icon: Minus, label: 'Keep going', color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
   decrease: { icon: TrendingDown, label: 'Back off', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
   deload: { icon: AlertCircle, label: 'Deload', color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
   plateau_break: { icon: Zap, label: 'Shake it up', color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' },
