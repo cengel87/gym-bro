@@ -8,6 +8,7 @@ interface SetRowEditableProps {
   set: ActiveSet
   setNumber: number
   isBodyweight: boolean
+  bodyweightKg?: number | null
   unit: 'kg' | 'lbs'
   onUpdate: (updates: Partial<ActiveSet>) => void
   onComplete: () => void
@@ -86,6 +87,7 @@ export function SetRowEditable({
   set,
   setNumber,
   isBodyweight,
+  bodyweightKg,
   unit,
   onUpdate,
   onComplete,
@@ -100,7 +102,8 @@ export function SetRowEditable({
 
   function handleLoadChange(kg: number | null) {
     if (isBodyweight) {
-      onUpdate({ addedLoadKg: kg })
+      // Always stamp bodyweightKg so effective_load_kg (BW + added) is stored correctly
+      onUpdate({ addedLoadKg: kg, bodyweightKg: bodyweightKg ?? null })
     } else {
       onUpdate({ externalLoadKg: kg })
     }
@@ -118,6 +121,13 @@ export function SetRowEditable({
   const loadDisplay = loadKg === null ? null : (unit === 'lbs' ? kgToLbs(loadKg) : loadKg)
   const loadPlaceholder = isBodyweight ? `+wt (${unit})` : unit
 
+  // Total effective weight for BW exercises (BW + added load)
+  const effectiveKg =
+    isBodyweight && bodyweightKg != null && set.addedLoadKg !== null
+      ? bodyweightKg + set.addedLoadKg
+      : null
+  const effectiveDisplay = effectiveKg === null ? null : (unit === 'lbs' ? Math.round(kgToLbs(effectiveKg)) : effectiveKg)
+
   return (
     <div className="flex items-center gap-2 py-2">
       {/* Set number */}
@@ -134,18 +144,24 @@ export function SetRowEditable({
           className="flex-1"
         />
       ) : set.addedLoadKg !== null ? (
-        <NumericInput
-          value={loadDisplay}
-          onChange={handleLoadChangeDisplay}
-          placeholder={`+wt`}
-          prefix="BW+"
-          className="flex-1"
-        />
+        <div className="flex-1 flex flex-col gap-0.5">
+          <NumericInput
+            value={loadDisplay}
+            onChange={handleLoadChangeDisplay}
+            placeholder={`+wt`}
+            prefix="BW+"
+          />
+          {effectiveDisplay !== null && (
+            <span className="text-[10px] text-center text-muted-foreground">
+              = {effectiveDisplay}{unit} total
+            </span>
+          )}
+        </div>
       ) : (
         <button
           type="button"
           className="flex-1 flex items-center justify-center h-11 rounded-lg bg-muted text-sm text-muted-foreground hover:bg-muted/80 transition-colors"
-          onClick={() => onUpdate({ addedLoadKg: 0 })}
+          onClick={() => onUpdate({ addedLoadKg: 0, bodyweightKg: bodyweightKg ?? null })}
           title="Tap to add extra weight"
         >
           BW (tap to +wt)
@@ -191,9 +207,23 @@ export function SetRow({ set, unit, isBodyweight }: SetRowProps) {
   const kgToLbs = (kg: number) => Math.round(kg * 2.20462 * 4) / 4
   const loadKg = isBodyweight ? set.addedLoadKg : set.externalLoadKg
   const loadDisplay = loadKg === null ? null : (unit === 'lbs' ? kgToLbs(loadKg) : loadKg)
-  const loadStr = isBodyweight
-    ? loadDisplay !== null ? `BW +${loadDisplay}${unit}` : 'BW'
-    : loadDisplay !== null ? `${loadDisplay}${unit}` : '—'
+
+  let loadStr: string
+  if (isBodyweight) {
+    const effectiveKg = set.bodyweightKg != null && set.addedLoadKg !== null
+      ? set.bodyweightKg + set.addedLoadKg
+      : null
+    const effectiveDisplay = effectiveKg === null ? null : (unit === 'lbs' ? Math.round(kgToLbs(effectiveKg)) : effectiveKg)
+    if (loadDisplay !== null && effectiveDisplay !== null) {
+      loadStr = `BW +${loadDisplay}${unit} (${effectiveDisplay}${unit})`
+    } else if (loadDisplay !== null) {
+      loadStr = `BW +${loadDisplay}${unit}`
+    } else {
+      loadStr = 'BW'
+    }
+  } else {
+    loadStr = loadDisplay !== null ? `${loadDisplay}${unit}` : '—'
+  }
 
   return (
     <div className="flex items-center gap-3 py-1.5 opacity-60">

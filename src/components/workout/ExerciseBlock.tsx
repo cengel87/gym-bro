@@ -161,6 +161,7 @@ export function ExerciseBlock({
                 set={s}
                 setNumber={s.setNumber}
                 isBodyweight={isBodyweight}
+                bodyweightKg={isBodyweight ? bodyweightKg : null}
                 unit={unit}
                 onUpdate={(updates) => onUpdateSet(s.setNumber, updates)}
                 onComplete={() => onCompleteSet(s.setNumber)}
